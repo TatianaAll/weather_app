@@ -48,12 +48,34 @@ class _MyHomePageState extends State<MyHomePage> {
       'https://geocoding-api.open-meteo.com/v1/search?name=$city',
     );
     // Appel à l'api
-    final response = await http.get(url);
+    final responseCity = await http.get(url);
+    final data = jsonDecode(responseCity.body)["results"];
+
+    final finalCity = data[0];
+    double lat = finalCity["latitude"];
+    double lon = finalCity["longitude"];
+    final meteoCity = Uri.parse(
+      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=d0b05df87a6186c2a0296fef2e59b2da&units=metric',
+    );
+
+    final response = await http.get(meteoCity);
     // Gestion des erreurs
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final finalData = jsonDecode(response.body);
       setState(() {
-        results = data.toString();
+        // on récupère la donnée de temps
+        /* coord: {lon: -0.5891, lat: 44.8085}, weather: [{id: 800, main: Clear, description: clear sky, icon: 01d}], base: stations, main: {temp: 306.35, feels_like: 305.55, temp_min: 306.35, temp_max: 308.92, pressure: 1020, humidity: 31, sea_level: 1020, grnd_level: 1015}, visibility: 10000, wind: {speed: 2.57, deg: 110}, clouds: {all: 0}, dt: 1779882717, sys: {type: 1, id: 6450, country: FR, sunrise: 1779855787, sunset: 1779910572}, timezone: 7200, id: 2973495, name: Talence, cod: 200} */
+        final weather = finalData["weather"][0]["description"];
+        final feel = finalData["main"]["feels_like"];
+        final temp = finalData["main"]["temp"];
+        final wind = finalData["wind"]["speed"];
+        results =
+            """
+Ville: ${finalCity["name"]}
+Météo: $weather
+Température: $temp°C ressenti $feel°C
+Vitesse du vent : $wind m/s
+        """;
       });
     }
   }
