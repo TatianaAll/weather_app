@@ -14,11 +14,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Application météo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
         colorScheme: .fromSeed(seedColor: Colors.deepOrange),
       ),
-      home: const MyHomePage(title: 'My weather app'),
+      home: const MyHomePage(title: 'Application météo'),
     );
   }
 }
@@ -35,86 +36,227 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final ApiCalling _apiCalling = ApiCalling();
   // on déclare mon controller pour récupérer le champs texte
-  TextEditingController inputCity = TextEditingController();
-  String results = "";
-  // on met en async
+  final TextEditingController inputCity = TextEditingController();
+
+  // préparation de mes données
+  String message = '';
+  bool isLoading = false;
+  String? cityName;
+  String? country;
+  String? description;
+  String? iconCode;
+  double? temp;
+  double? feelsLike;
+  double? wind;
+
+  // FONCTION POUR GERER LA RECHERCHE METEO SELON LA VILLE
   Future<void> handleClick() async {
     final city = inputCity.text.trim();
+    // si pas de ville renseigné =>
     if (city.isEmpty) {
-      setState(() => results = 'Veuillez renseigner une ville');
+      setState(() {
+        message = 'Veuillez renseigner une ville.';
+        cityName = null;
+      });
       return;
     }
 
+    // appel de la méthode getCoordinates puis getWeather
     try {
+      // appel de la méthode
       final finalCity = await _apiCalling.getCoordinates(city);
+      // Récupération de la latitude et longitude de la ville renseignée
       final latValue = finalCity['latitude'];
       final lonValue = finalCity['longitude'];
+      
+      // fallback ==> si ça n'est pas des valeur numériques on lève une exception
       if (latValue is! num || lonValue is! num) {
-        setState(() => results = 'Coordonnées invalides reçues');
-        return;
+        throw Exception('Coordonnées invalides reçues');
       }
 
-      final lat = latValue.toDouble();
-      final lon = lonValue.toDouble();
-      final weatherJson = await _apiCalling.getWeather(lat, lon);
+      // Appel de la méthode pour avoir la météo en rensignant le longitude et latitude obtenue précédemment
+      final weatherJson = await _apiCalling.getWeather(
+        latValue.toDouble(),
+        lonValue.toDouble(),
+      );
 
+      // On met à jour le carton avec les informations reçu de l'appel API
       setState(() {
-        // on récupère la donnée de temps
-        /* coord: {lon: -0.5891, lat: 44.8085}, weather: [{id: 800, main: Clear, description: clear sky, icon: 01d}], base: stations, main: {temp: 306.35, feels_like: 305.55, temp_min: 306.35, temp_max: 308.92, pressure: 1020, humidity: 31, sea_level: 1020, grnd_level: 1015}, visibility: 10000, wind: {speed: 2.57, deg: 110}, clouds: {all: 0}, dt: 1779882717, sys: {type: 1, id: 6450, country: FR, sunrise: 1779855787, sunset: 1779910572}, timezone: 7200, id: 2973495, name: Talence, cod: 200} */
-        final cityName = weatherJson['name'];
-        final country = weatherJson['sys']['country'];
-        final weather = weatherJson['weather'][0]['description'];
-        final feel = weatherJson['main']['feels_like'];
-        final temp = weatherJson['main']['temp'];
-        final wind = weatherJson['wind']['speed'];
-        results =
-            """
-Ville: $cityName $country
-Météo: $weather
-Température: $temp°C ressenti $feel°C
-Vitesse du vent : $wind m/s
-        """;
+        // typage sécurisé + nullable
+        // as 	Typecast (also used to specify library prefixes ) => https://dart.dev/language/operators
+        cityName = weatherJson['name'] as String?;
+        country = weatherJson['sys']?['country'] as String?;
+        description = weatherJson['weather']?[0]?['description'] as String?;
+        iconCode = weatherJson['weather']?[0]?['icon'] as String?;
+        temp = (weatherJson['main']?['temp'] as num?)?.toDouble();
+        feelsLike = (weatherJson['main']?['feels_like'] as num?)?.toDouble();
+        wind = (weatherJson['wind']?['speed'] as num?)?.toDouble();
+        message = '';
       });
-    } catch (e) {
-      setState(() => results = 'Erreur: $e');
+    } catch (error) {
+      setState(() {
+        message = 'Erreur: ${error.toString()}';
+        cityName = null;
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
+  }
+
+  Widget _buildWeatherCard() {
+    if (cityName == null) {
+      return const SizedBox.shrink();
+    }
+
+    final iconUrl = iconCode != null
+        ? 'https://openweathermap.org/img/wn/$iconCode@2x.png'
+        : null;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 6,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (iconUrl != null)
+                  Image.network(iconUrl, width: 80, height: 80),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$cityName, ${country ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        description ?? '',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _weatherStat('Temp', temp, '°C'),
+                _weatherStat('Ressenti', feelsLike, '°C'),
+                _weatherStat('Vent', wind, 'm/s'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _weatherStat(String label, double? value, String suffix) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value != null ? '${value.toStringAsFixed(1)}$suffix' : '--',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(16.0), // ajout de padding
-              child: TextField(
-                obscureText: false,
-                controller:
-                    inputCity, // ajout d'un controller pour récupérer la value
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Renseignez votre ville',
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Cherchez la météo de votre ville',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            ElevatedButton(onPressed: handleClick, child: Text('Chercher')),
-            Row(children: [Center(child: Text(results))]),
-          ],
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: inputCity,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => handleClick(),
+                  decoration: InputDecoration(
+                    hintText: 'Entrez Paris, Lyon, Marseille...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : handleClick,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Chercher la météo'),
+                ),
+              ),
+              if (message.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Text(
+                    message,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              _buildWeatherCard(),
+            ],
+          ),
         ),
       ),
     );
