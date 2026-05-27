@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert'; // convertion des réponses JSON des API
+import 'package:weather_app/http/api_calling.dart'; // convertion des réponses JSON des API
 // d0b05df87a6186c2a0296fef2e59b2da
 
 void main() {
@@ -34,43 +33,40 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final ApiCalling _apiCalling = ApiCalling();
   // on déclare mon controller pour récupérer le champs texte
   TextEditingController inputCity = TextEditingController();
   String results = "";
   // on met en async
   Future<void> handleClick() async {
-    // récupération du nom de ville
-    final city = inputCity.text;
-    // on récupère la ville pour retourner les longitudes/latitudes
+    final city = inputCity.text.trim();
+    if (city.isEmpty) {
+      setState(() => results = 'Veuillez renseigner une ville');
+      return;
+    }
 
-    // On génère l'URL de l'appel API avec le nom de la ville
-    final url = Uri.parse(
-      'https://geocoding-api.open-meteo.com/v1/search?name=$city',
-    );
-    // Appel à l'api
-    final responseCity = await http.get(url);
-    final data = jsonDecode(responseCity.body)["results"];
+    try {
+      final finalCity = await _apiCalling.getCoordinates(city);
+      final latValue = finalCity['latitude'];
+      final lonValue = finalCity['longitude'];
+      if (latValue is! num || lonValue is! num) {
+        setState(() => results = 'Coordonnées invalides reçues');
+        return;
+      }
 
-    final finalCity = data[0];
-    double lat = finalCity["latitude"];
-    double lon = finalCity["longitude"];
-    final meteoCity = Uri.parse(
-      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=d0b05df87a6186c2a0296fef2e59b2da&units=metric',
-    );
+      final lat = latValue.toDouble();
+      final lon = lonValue.toDouble();
+      final weatherJson = await _apiCalling.getWeather(lat, lon);
 
-    final response = await http.get(meteoCity);
-    // Gestion des erreurs
-    if (response.statusCode == 200) {
-      final finalData = jsonDecode(response.body);
       setState(() {
         // on récupère la donnée de temps
         /* coord: {lon: -0.5891, lat: 44.8085}, weather: [{id: 800, main: Clear, description: clear sky, icon: 01d}], base: stations, main: {temp: 306.35, feels_like: 305.55, temp_min: 306.35, temp_max: 308.92, pressure: 1020, humidity: 31, sea_level: 1020, grnd_level: 1015}, visibility: 10000, wind: {speed: 2.57, deg: 110}, clouds: {all: 0}, dt: 1779882717, sys: {type: 1, id: 6450, country: FR, sunrise: 1779855787, sunset: 1779910572}, timezone: 7200, id: 2973495, name: Talence, cod: 200} */
-        final cityName = finalData["name"];
-        final country = finalData["sys"]["country"];
-        final weather = finalData["weather"][0]["description"];
-        final feel = finalData["main"]["feels_like"];
-        final temp = finalData["main"]["temp"];
-        final wind = finalData["wind"]["speed"];
+        final cityName = weatherJson['name'];
+        final country = weatherJson['sys']['country'];
+        final weather = weatherJson['weather'][0]['description'];
+        final feel = weatherJson['main']['feels_like'];
+        final temp = weatherJson['main']['temp'];
+        final wind = weatherJson['wind']['speed'];
         results =
             """
 Ville: $cityName $country
@@ -79,6 +75,8 @@ Température: $temp°C ressenti $feel°C
 Vitesse du vent : $wind m/s
         """;
       });
+    } catch (e) {
+      setState(() => results = 'Erreur: $e');
     }
   }
 
