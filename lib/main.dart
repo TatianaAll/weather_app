@@ -12,12 +12,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Application météo',
       theme: ThemeData(
         // This is the theme of your application.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(seedColor: Colors.deepOrange),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'My weather app'),
     );
   }
 }
@@ -32,12 +32,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  TextEditingController inputCity = TextEditingController();
+  void handleClick() {
+    // on récupère le guess du joueur
+  }
 
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
-    
 
     return Scaffold(
       appBar: AppBar(
@@ -53,8 +56,19 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-
-          mainAxisAlignment: .center,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.0), // ajout de padding
+              child: TextField(
+                obscureText: false,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Renseignez votre ville',
+                ),
+              ),
+            ),
+            ElevatedButton(onPressed: handleClick, child: Text('Chercher')),
+          ],
         ),
       ),
     );
