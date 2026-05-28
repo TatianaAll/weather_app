@@ -19,14 +19,13 @@ Un projet Flutter simple pour afficher la météo d’une ville.
 
 ## Configuration de l’API
 
-Ce projet charge une clé API depuis un fichier `.env`.
+Ce projet charge une clé API OpenWeatherMap depuis un fichier `.env`.
 
 1. Créez un fichier `.env` à la racine du projet si ce n’est pas déjà fait.
-2. Ajoutez les lignes suivantes :
+2. Ajoutez la ligne suivante :
 
 ```env
 API_WEATHER=VOTRE_CLE_API_OPENWEATHERMAP
-RAPIDAPI_KEY=VOTRE_CLE_RAPIDAPI
 ```
 
 3. Assurez-vous que le fichier `.env` est déclaré comme asset dans `pubspec.yaml` :  
@@ -35,6 +34,7 @@ RAPIDAPI_KEY=VOTRE_CLE_RAPIDAPI
 flutter:
   assets:
     - .env
+    - assets/ISO3166-1.alpha2.json
 ```
 
 ## Lancer l’application

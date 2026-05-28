@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // pour récupérer mes variables d'environnement
 
@@ -73,54 +74,24 @@ class ApiCalling {
   }
 
   Future<String?> getCountryName(String countryCode) async {
-    final rapidApiKey = dotenv.env['RAPIDAPI_KEY'];
-    if (rapidApiKey == null || rapidApiKey.isEmpty) {
-      throw Exception('Clé RapidAPI manquante. Ajoutez RAPIDAPI_KEY dans .env');
-    }
-
-    final url = Uri.parse(
-      'https://country-codes3.p.rapidapi.com/search?short_name=$countryCode',
-    );
-
     try {
-      final response = await http
-          .get(url, headers: {
-            'X-RapidAPI-Key': rapidApiKey,
-            'X-RapidAPI-Host': 'country-codes3.p.rapidapi.com',
-            'Accept': 'application/json',
-          })
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () => throw SocketException('Connexion Internet perdue'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is Map<String, dynamic>) {
-          if (data['success'] == false) {
-            return null;
-          }
-
-          final name = data['name'] ?? data['country_name'] ?? data['official_name'];
-          if (name is String && name.isNotEmpty) {
-            return name;
-          }
-
-          final nested = data['data'];
-          if (nested is Map<String, dynamic>) {
-            final nestedName = nested['name'] ?? nested['country_name'] ?? nested['official_name'];
-            if (nestedName is String && nestedName.isNotEmpty) {
-              return nestedName;
-            }
-          }
+      // import du JSON trouvé sur GitHub avec la correspondance code alpha-2 => nom du pays
+      final rawJson = await rootBundle.loadString('assets/ISO3166-1.alpha2.json');
+      // on transforme en Map lisible par flutter
+      final data = jsonDecode(rawJson);
+      if (data is Map<String, dynamic>) {
+        // on récupère le code alpha-2
+        final code = countryCode.toUpperCase();
+        // on recherche le nom correspondant au code passé
+        final name = data[code];
+        // on renvoi le nom du pays trouvé (en anglais mais vazy c'est bon)
+        if (name is String && name.isNotEmpty) {
+          return name;
         }
-        return null;
       }
-      throw Exception('Erreur API RapidAPI: ${response.statusCode}');
-    } on SocketException catch (e) {
-      throw Exception('Pas de connexion Internet: ${e.message}');
+      return null;
     } catch (e) {
-      throw Exception('Erreur: ${e.toString()}');
+      throw Exception('Impossible de lire le fichier de pays: ${e.toString()}');
     }
   }
 }
