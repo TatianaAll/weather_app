@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
-        colorScheme: .fromSeed(seedColor: Colors.deepOrange),
+        colorScheme: .fromSeed(seedColor: Colors.indigo.shade100),
       ),
       home: const MyHomePage(title: 'Application météo'),
     );
@@ -115,7 +115,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildWeatherCard() {
-    
     if (cityName == null) {
       return const SizedBox.shrink();
     }
@@ -133,9 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // [Padding], a widget that accepts [EdgeInsets] to describe its margins.
       margin: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 18.0),
       // arrondis sur les bords
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
 
       /// Elevated cards have a drop shadow, providing more separation from the
       /// The [elevation] must be null or non-negative.
@@ -231,77 +228,96 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+        elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Cherchez la météo de votre ville',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
-                  controller: inputCity,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => handleClick(),
-                  decoration: InputDecoration(
-                    hintText: 'Entrez une ville (Paris, Bordeaux, ...)',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : handleClick,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: LoadingAnimationWidget.staggeredDotsWave(
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        )
-                      : const Text('Chercher la météo'),
-                ),
-              ),
-              if (message.isNotEmpty)
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.indigo.shade100, Colors.blueGrey.shade100],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    message,
-                    style: const TextStyle(color: Colors.redAccent),
+                    'Cherchez la météo de votre ville',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              _buildWeatherCard(),
-            ],
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: TextField(
+                    controller: inputCity,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => handleClick(),
+                    decoration: InputDecoration(
+                      hintText: 'Entrez une ville (Paris, Bordeaux, ...)',
+                      prefixIcon: Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.grey.shade800),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : handleClick,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: LoadingAnimationWidget.staggeredDotsWave(
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          )
+                        : const Text('Chercher la météo'),
+                  ),
+                ),
+                if (message.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
+                    child: Text(
+                      message,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                _buildWeatherCard(),
+              ],
+            ),
           ),
         ),
       ),
