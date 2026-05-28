@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
-        colorScheme: .fromSeed(seedColor: Colors.deepOrange.shade800),
+        colorScheme: .fromSeed(seedColor: Colors.deepOrange),
       ),
       home: const MyHomePage(title: 'Application météo'),
     );
@@ -127,17 +127,34 @@ class _MyHomePageState extends State<MyHomePage> {
         : null;
 
     return Card(
+      color: Colors.transparent,
+      shadowColor: Colors.blueAccent.withOpacity(0.35),
       // objet Card https://api.flutter.dev/flutter/material/Card-class.html
       // [Padding], a widget that accepts [EdgeInsets] to describe its margins.
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      margin: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 18.0),
       // arrondis sur les bords
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
 
       /// Elevated cards have a drop shadow, providing more separation from the
       /// The [elevation] must be null or non-negative.
-      elevation: 6,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+      elevation: 10,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 300),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            colors: [Colors.pink.shade100, Colors.indigo.shade500],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: Colors.amber.shade600.withOpacity(0.25),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(30.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -146,9 +163,9 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 // Icône avec Image
                 if (iconUrl != null)
-                  Image.network(iconUrl, width: 80, height: 80),
+                  Image.network(iconUrl, width: 100, height: 100),
                 // Quand je sais qu'une donnée ne va pas bouger je peux mettre CONST devants, ça évite de la recharger à chaque fois
-                const SizedBox(width: 16),
+                const SizedBox(width: 36),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,25 +173,29 @@ class _MyHomePageState extends State<MyHomePage> {
                       Text(
                         '$cityName, ${country ?? ''}',
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         description ?? '',
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _weatherStat('Temp', temp, '°C'),
+                _weatherStat('Température', temp, '°C'),
                 _weatherStat('Ressenti', feelsLike, '°C'),
                 _weatherStat('Vent', wind, 'm/s'),
               ],
@@ -192,12 +213,16 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
+          style: const TextStyle(fontSize: 14, color: Colors.white70),
         ),
         const SizedBox(height: 6),
         Text(
           value != null ? '${value.toStringAsFixed(1)}$precision' : '--',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ],
     );
