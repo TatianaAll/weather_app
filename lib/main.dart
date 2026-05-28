@@ -65,6 +65,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // appel de la méthode getCoordinates puis getWeather
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       // appel de la méthode
       final finalCity = await _apiCalling.getCoordinates(city);
       // Récupération de la latitude et longitude de la ville renseignée
@@ -96,10 +100,10 @@ class _MyHomePageState extends State<MyHomePage> {
         wind = (weatherJson['wind']?['speed'] as num?)?.toDouble();
         message = '';
       });
-    } catch (error) {
+    } catch (e) {
       setState(() {
         // Si erreur on affiche le message d'erreur
-        message = 'Erreur: ${error.toString()}';
+        message = '❌ ${e.toString()}';
         cityName = null;
       });
     } finally {

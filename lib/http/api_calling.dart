@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // pour récupérer mes variables d'environnement
 
@@ -12,22 +13,35 @@ class ApiCalling {
     final url = Uri.parse(
       'https://geocoding-api.open-meteo.com/v1/search?name=$city&count=1',
     );
-    // Appel à l'api
-    final responseCity = await http.get(url);
 
-    if (responseCity.statusCode == 200) {
-      final dataCoordinates = jsonDecode(responseCity.body);
-      final results = dataCoordinates['results'];
-      if (results is List && results.isNotEmpty) {
-        final first = results[0];
-        if (first is Map<String, dynamic>) {
-          return first;
+    try {
+      // Appel à l'api
+      final responseCity = await http
+          .get(url)
+          .timeout(
+            // si + de 10s ==> pas d'internet pour faire péter l'erreur
+            const Duration(seconds: 10),
+            onTimeout: () => throw SocketException('Connexion Internet perdue'),
+          );
+
+      if (responseCity.statusCode == 200) {
+        final dataCoordinates = jsonDecode(responseCity.body);
+        final results = dataCoordinates['results'];
+        if (results is List && results.isNotEmpty) {
+          final first = results[0];
+          if (first is Map<String, dynamic>) {
+            return first;
+          }
         }
+        throw Exception('Ville introuvable');
       }
-      throw Exception('Ville introuvable');
-    }
 
-    throw Exception('Erreur API ${responseCity.statusCode}');
+      throw Exception('Erreur API ${responseCity.statusCode}');
+    } on SocketException catch (e) {
+      throw Exception('Pas de connexion Internet: ${e.message}');
+    } catch (e) {
+      throw Exception('Erreur: ${e.toString()}');
+    }
   }
 
   Future<Map<String, dynamic>> getWeather(double lat, double long) async {
@@ -37,13 +51,24 @@ class ApiCalling {
       'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&appid=$apiKey&units=metric',
     );
 
-    final response = await http.get(urlWeather);
+    try {
+      final response = await http
+          .get(urlWeather)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw SocketException('Connexion Internet perdue'),
+          );
 
-    // Gestion des erreurs
-    if (response.statusCode == 200) {
-      final finalData = jsonDecode(response.body);
-      return finalData;
+      // Gestion des erreurs
+      if (response.statusCode == 200) {
+        final finalData = jsonDecode(response.body);
+        return finalData;
+      }
+      throw Exception('Erreur API: ${response.statusCode}');
+    } on SocketException catch (e) {
+      throw Exception('Pas de connexion Internet: ${e.message}');
+    } catch (e) {
+      throw Exception('Erreur: ${e.toString()}');
     }
-    return throw Exception();
   }
 }
