@@ -87,13 +87,23 @@ class _MyHomePageState extends State<MyHomePage> {
         lonValue.toDouble(),
       );
 
+      final countryCode = weatherJson['sys']?['country'] as String?;
+      String? countryName;
+      if (countryCode != null && countryCode.isNotEmpty) {
+        try {
+          countryName = await _apiCalling.getCountryName(countryCode);
+        } catch (_) {
+          countryName = null;
+        }
+      }
+
       // On met à jour le carton avec les informations reçu de l'appel API
       setState(() {
         // typage sécurisé + nullable
         // `as` => Typecast (also used to specify library prefixes ) => https://dart.dev/language/operators
         // les ? pour dire que le résultats peut être null as String pour dire qu'on attend une string
         cityName = weatherJson['name'] as String?;
-        country = weatherJson['sys']?['country'] as String?;
+        country = countryName ?? countryCode;
         description = weatherJson['weather']?[0]?['description'] as String?;
         iconCode = weatherJson['weather']?[0]?['icon'] as String?;
         temp = (weatherJson['main']?['temp'] as num?)?.toDouble();

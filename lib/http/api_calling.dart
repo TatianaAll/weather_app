@@ -71,4 +71,56 @@ class ApiCalling {
       throw Exception('Erreur: ${e.toString()}');
     }
   }
+
+  Future<String?> getCountryName(String countryCode) async {
+    final rapidApiKey = dotenv.env['RAPIDAPI_KEY'];
+    if (rapidApiKey == null || rapidApiKey.isEmpty) {
+      throw Exception('Clé RapidAPI manquante. Ajoutez RAPIDAPI_KEY dans .env');
+    }
+
+    final url = Uri.parse(
+      'https://country-codes3.p.rapidapi.com/search?short_name=$countryCode',
+    );
+
+    try {
+      final response = await http
+          .get(url, headers: {
+            'X-RapidAPI-Key': rapidApiKey,
+            'X-RapidAPI-Host': 'country-codes3.p.rapidapi.com',
+            'Accept': 'application/json',
+          })
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw SocketException('Connexion Internet perdue'),
+          );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          if (data['success'] == false) {
+            return null;
+          }
+
+          final name = data['name'] ?? data['country_name'] ?? data['official_name'];
+          if (name is String && name.isNotEmpty) {
+            return name;
+          }
+
+          final nested = data['data'];
+          if (nested is Map<String, dynamic>) {
+            final nestedName = nested['name'] ?? nested['country_name'] ?? nested['official_name'];
+            if (nestedName is String && nestedName.isNotEmpty) {
+              return nestedName;
+            }
+          }
+        }
+        return null;
+      }
+      throw Exception('Erreur API RapidAPI: ${response.statusCode}');
+    } on SocketException catch (e) {
+      throw Exception('Pas de connexion Internet: ${e.message}');
+    } catch (e) {
+      throw Exception('Erreur: ${e.toString()}');
+    }
+  }
 }

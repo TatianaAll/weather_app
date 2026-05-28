@@ -22,10 +22,11 @@ Un projet Flutter simple pour afficher la météo d’une ville.
 Ce projet charge une clé API depuis un fichier `.env`.
 
 1. Créez un fichier `.env` à la racine du projet si ce n’est pas déjà fait.
-2. Ajoutez la ligne suivante :
+2. Ajoutez les lignes suivantes :
 
 ```env
 API_WEATHER=VOTRE_CLE_API_OPENWEATHERMAP
+RAPIDAPI_KEY=VOTRE_CLE_RAPIDAPI
 ```
 
 3. Assurez-vous que le fichier `.env` est déclaré comme asset dans `pubspec.yaml` :  
