@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // pour récupérer mes variables d'environnement
 
 // Class statefull pour appel de l'API pour récupérer les longitudes et latitudes à partir d'un nom de ville
 // dynamic pour indiquer que le nombre de résultats n'est pas important
@@ -30,8 +31,10 @@ class ApiCalling {
   }
 
   Future<Map<String, dynamic>> getWeather(double lat, double long) async {
+    final apiKey = dotenv.env['API_WEATHER'];
+
     final urlWeather = Uri.parse(
-      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&appid=d0b05df87a6186c2a0296fef2e59b2da&units=metric',
+      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&appid=$apiKey&units=metric',
     );
 
     final response = await http.get(urlWeather);

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart'; // pour import de l'objet Card
 import 'package:weather_app/http/api_calling.dart'; // convertion des réponses JSON des API
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // pour récupérer mes variables d'environnement
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -138,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Icône avec Image
                 if (iconUrl != null)
                   Image.network(iconUrl, width: 80, height: 80),
-                  // Quand je sais qu'une donnée ne va pas bouger je peux mettre CONST devants, ça évite de la recharger à chaque fois
+                // Quand je sais qu'une donnée ne va pas bouger je peux mettre CONST devants, ça évite de la recharger à chaque fois
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
