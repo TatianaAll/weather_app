@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart'; // pour import de l'objet Card
 import 'package:weather_app/http/api_calling.dart'; // convertion des réponses JSON des API
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // pour récupérer mes variables d'environnement
+import 'package:loading_animation_widget/loading_animation_widget.dart'; // pour ma loading spinner
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
-        colorScheme: .fromSeed(seedColor: Colors.deepOrange),
+        colorScheme: .fromSeed(seedColor: Colors.deepOrange.shade800),
       ),
       home: const MyHomePage(title: 'Application météo'),
     );
@@ -114,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildWeatherCard() {
+    
     if (cityName == null) {
       return const SizedBox.shrink();
     }
@@ -251,12 +253,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   child: isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
+                          child: LoadingAnimationWidget.staggeredDotsWave(
                             color: Colors.white,
+                            size: 20,
                           ),
                         )
                       : const Text('Chercher la météo'),
