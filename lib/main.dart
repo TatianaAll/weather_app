@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // pour import de l'objet Card
 import 'package:weather_app/http/api_calling.dart'; // convertion des réponses JSON des API
-// d0b05df87a6186c2a0296fef2e59b2da
 
 void main() {
   runApp(const MyApp());
@@ -68,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // Récupération de la latitude et longitude de la ville renseignée
       final latValue = finalCity['latitude'];
       final lonValue = finalCity['longitude'];
-      
+
       // fallback ==> si ça n'est pas des valeur numériques on lève une exception
       if (latValue is! num || lonValue is! num) {
         throw Exception('Coordonnées invalides reçues');
@@ -83,7 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // On met à jour le carton avec les informations reçu de l'appel API
       setState(() {
         // typage sécurisé + nullable
-        // as 	Typecast (also used to specify library prefixes ) => https://dart.dev/language/operators
+        // `as` => Typecast (also used to specify library prefixes ) => https://dart.dev/language/operators
+        // les ? pour dire que le résultats peut être null as String pour dire qu'on attend une string
         cityName = weatherJson['name'] as String?;
         country = weatherJson['sys']?['country'] as String?;
         description = weatherJson['weather']?[0]?['description'] as String?;
@@ -95,6 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     } catch (error) {
       setState(() {
+        // Si erreur on affiche le message d'erreur
         message = 'Erreur: ${error.toString()}';
         cityName = null;
       });
@@ -110,13 +111,21 @@ class _MyHomePageState extends State<MyHomePage> {
       return const SizedBox.shrink();
     }
 
+    // Intégration de l'icône avec l'API openweather
+    // doc https://openweathermap.org/api/weather-conditions#693bf48797d58c810416ef87
     final iconUrl = iconCode != null
         ? 'https://openweathermap.org/img/wn/$iconCode@2x.png'
         : null;
 
     return Card(
+      // objet Card https://api.flutter.dev/flutter/material/Card-class.html
+      // [Padding], a widget that accepts [EdgeInsets] to describe its margins.
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      // arrondis sur les bords
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+
+      /// Elevated cards have a drop shadow, providing more separation from the
+      /// The [elevation] must be null or non-negative.
       elevation: 6,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -126,8 +135,10 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Icône avec Image
                 if (iconUrl != null)
                   Image.network(iconUrl, width: 80, height: 80),
+                  // Quand je sais qu'une donnée ne va pas bouger je peux mettre CONST devants, ça évite de la recharger à chaque fois
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -165,7 +176,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _weatherStat(String label, double? value, String suffix) {
+  // Widget avec mes stats à afficher
+  Widget _weatherStat(String label, double? value, String precision) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -175,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         const SizedBox(height: 6),
         Text(
-          value != null ? '${value.toStringAsFixed(1)}$suffix' : '--',
+          value != null ? '${value.toStringAsFixed(1)}$precision' : '--',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
       ],
@@ -212,8 +224,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => handleClick(),
                   decoration: InputDecoration(
-                    hintText: 'Entrez Paris, Lyon, Marseille...',
-                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Entrez une ville (Paris, Bordeaux, ...)',
+                    prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
